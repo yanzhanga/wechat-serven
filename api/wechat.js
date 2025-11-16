@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
-  const TOKEN = "cs1"; // 改成你的 Token
+  const TOKEN = "cs1";
 
-  // 1. 微信验证服务器时的 GET 请求
+  // 1. 验证服务器的 GET（保持不变）
   if (req.method === "GET") {
     const { signature, timestamp, nonce, echostr } = req.query;
 
@@ -17,28 +17,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 2. 微信用户发送消息时的 POST 请求
+  // 2. 收到用户消息时的 POST —— 临时最简版
   if (req.method === "POST") {
-    let xmlData = "";
-    req.on("data", chunk => (xmlData += chunk));
-    req.on("end", async () => {
-      // 转发到 n8n Webhook
-      const webhookUrl = "https://comely-eugenic-angela.ngrok-free.dev/webhook/wechat"; // ⭐改这里！
-
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/xml" },
-        body: xmlData
-      });
-
-      // 给微信快速返回 200 OK
-      res.send("success");
-    });
-
+    // 不转发，不解析，直接告诉微信“成功”
+    res.send("success");
     return;
   }
 
   res.status(405).send("Method Not Allowed");
 }
-
-

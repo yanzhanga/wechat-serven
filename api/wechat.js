@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     req.on("data", chunk => (xmlData += chunk));
     req.on("end", async () => {
       // 转发到 n8n Webhook
-      const webhookUrl = "https://你自己的-n8n-webhook地址"; // ⭐改这里！
+      const webhookUrl = "http://localhost:5678/webhook/wechat"; // ⭐改这里！
 
       await fetch(webhookUrl, {
         method: "POST",
@@ -40,3 +40,4 @@ export default async function handler(req, res) {
 
   res.status(405).send("Method Not Allowed");
 }
+

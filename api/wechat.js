@@ -1,25 +1,42 @@
-const crypto = require("crypto");
+export default async function handler(req, res) {
+  const TOKEN = "cs1"; // 改成你的 Token
 
-module.exports = async (req, res) => {
-  const token = "cs1"; // 必须和公众号后台 Token 一样
-
-  // 1. 微信服务器验证（GET）
+  // 1. 微信验证服务器时的 GET 请求
   if (req.method === "GET") {
-    const { signature, timestamp, nonce, echostr } = req.query || {};
+    const { signature, timestamp, nonce, echostr } = req.query;
 
-    const str = [token, timestamp, nonce].sort().join("");
-    const hash = crypto.createHash("sha1").update(str).digest("hex");
+    const crypto = await import("crypto");
+    const tmpStr = [TOKEN, timestamp, nonce].sort().join("");
+    const hash = crypto.createHash("sha1").update(tmpStr).digest("hex");
 
     if (hash === signature) {
-      // 验证成功，按要求原样返回 echostr
-      res.status(200).send(echostr);
+      res.send(echostr);
     } else {
-      // 验证失败也返回 200，内容随意
-      res.status(200).send("error");
+      res.send("error");
     }
     return;
   }
 
-  // 2. 之后真正收消息用 POST，这里先简单返回 success 防止报错
-  res.status(200).send("success");
-};
+  // 2. 微信用户发送消息时的 POST 请求
+  if (req.method === "POST") {
+    let xmlData = "";
+    req.on("data", chunk => (xmlData += chunk));
+    req.on("end", async () => {
+      // 转发到 n8n Webhook
+      const webhookUrl = "https://你自己的-n8n-webhook地址"; // ⭐改这里！
+
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/xml" },
+        body: xmlData
+      });
+
+      // 给微信快速返回 200 OK
+      res.send("success");
+    });
+
+    return;
+  }
+
+  res.status(405).send("Method Not Allowed");
+}
